@@ -57,32 +57,32 @@ months2 = monthly_timeline(df2)
 colours = ('white','orange','green','red','blue')
 cmap = LinearSegmentedColormap.from_list('Custom',colours, len(colours))
 
-fig, (ax1, ax2) = plt.subplots(1,2, figsize=(30,15))
+
+fig, (ax1, ax2) = plt.subplots(1,2, figsize=(25,12))
+
+# TD subplot
 g1 = sns.heatmap(months1,cmap=cmap,cbar=False,ax=ax1)
-g1.set_ylabel('')
-g1.set_xlabel('')
+g1.set_title('TD Moderator Timeline', fontsize=24, fontweight='bold')
+g1.set_ylabel('Month', fontsize=20)
+g1.tick_params(axis='y',which='major', labelsize=14)
+g1.set_xlabel('TD Moderators', fontsize=20)
+g1.tick_params(axis='x',which='both', labelbottom='off')
+
+# CMV subplot
 g2 = sns.heatmap(months2,cmap=cmap,ax=ax2)
+g2.set_title('CMV Moderator Timeline', fontsize=24, fontweight='bold')
 g2.set_ylabel('')
-g2.set_xlabel('')    
+g2.tick_params(axis='y',which='major', labelsize=14)
+g2.set_xlabel('CMV Moderators', fontsize=20) 
+g2.tick_params(axis='x',which='both', labelbottom='off')   
+
+# legend
 colorbar = ax2.collections[0].colorbar
 colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
 colorbar.set_ticklabels(['not present', 'other perm types',
                          '+ access, posts', '+ access, flair, mail, posts',
                          'all'])
-colorbar.ax.tick_params(labelsize=20)
-ax1.set_title('TD Moderator Timeline', fontsize=24)
-ax2.set_title('CMV Moderator Timeline', fontsize=24)
-ax1.set_xlabel('TD Moderators', fontsize=20)
-ax1.set_ylabel('Date (in months)', fontsize=20)
-ax2.set_xlabel('CMV Moderators', fontsize=20)
-#plt.yticks(rotation=90)
-ax1.tick_params(axis='y',which='major', labelsize=14)
-ax1.tick_params(axis='x',which='both', labelbottom='off')
-ax2.tick_params(axis='y',which='major', labelsize=14)
-ax2.tick_params(axis='x',which='both', labelbottom='off')
+colorbar.ax.tick_params(labelsize=18)
+
 plt.tight_layout()
-
-
-
-
 plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines.png')
