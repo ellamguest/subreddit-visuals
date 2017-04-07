@@ -1,0 +1,18 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr  7 11:38:43 2017
+
+@author: emg
+"""
+
+import pandas as pd
+
+
+df = pd.read_csv('/Users/emg/Programming/GitHub/the_donald_project/raw_data/all_mods_archive_it_04_17.csv')
+df = df[['name','permissions']]
+df['types'] = df['permissions'].apply(lambda x: x.split(','))
+
+s = df.types.apply(lambda x: pd.Series(x)).unstack()
+df2 = df.join(pd.DataFrame(s.reset_index(level=0, drop=True)))
+df2['value']=1

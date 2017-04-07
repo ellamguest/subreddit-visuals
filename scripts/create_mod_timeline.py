@@ -71,10 +71,12 @@ def timeline_df(df):
     #df should have columns name date, pubdate, perm_level
     # df index should be qual to names
     subset = prep_df(df)
-    names = list(set(subset['name']))
+    names = list(subset.sort_values('date')['name'].drop_duplicates())
     dates = date_range(subset)
     t_dict = timeline_dict(subset, names, dates)
     timeline = pd.DataFrame.from_dict(t_dict)
     timeline.index = dates
+    temps = timeline.sum()[timeline.sum()==0].index #remove mods present less than a week
+    timeline = timeline[[name for name in names if name not in temps]] #over mods by time of first modding
     return timeline
-       
+    
