@@ -58,7 +58,9 @@ colours = ('white','orange','green','red','blue')
 cmap = LinearSegmentedColormap.from_list('Custom',colours, len(colours))
 
 
-fig, (ax1, ax2) = plt.subplots(1,2, figsize=(25,12))
+ratio = int(months1.shape[1])/int(months2.shape[1])
+#f, (a0, a1) = plt.subplots(1,2, gridspec_kw = {'width_ratios':[3, 1]})
+fig, (ax1, ax2) = plt.subplots(1,2, figsize=(25,12), gridspec_kw = {'width_ratios':[2, 1]})
 
 # TD subplot
 g1 = sns.heatmap(months1,cmap=cmap,cbar=False,ax=ax1)
@@ -85,4 +87,4 @@ colorbar.set_ticklabels(['not present', 'other perm types',
 colorbar.ax.tick_params(labelsize=18)
 
 plt.tight_layout()
-plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines.png')
+plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines-splitratio.png')
