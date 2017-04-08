@@ -1,12 +1,21 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr  4 17:30:46 2017
+Created on Sat Apr  8 10:55:38 2017
 
 @author: emg
 """
 import pandas as pd
 import numpy as np
+
+def td_data():
+    df = pd.read_csv('/Users/emg/Programming/GitHub/the_donald_project/raw_data/all_mods_archive_it_04_17.csv')
+    df['perm_level'] = df['permissions'].map(
+            {'+access,-config,-flair,-mail,+posts,-wiki':2,
+                 '+access,-config,+flair,+mail,+posts,-wiki':3,
+                 '+all':4}
+            ).fillna(1)
+    return df
 
 def prep_df(df):
     #subset df into required coluns and types
@@ -80,4 +89,10 @@ def timeline_df(df):
     temps = timeline.sum()[timeline.sum()==0].index #remove mods present less than a week
     timeline = timeline[[name for name in names if name not in temps]] #over mods by time of first modding
     return timeline
-    
+
+
+df = td_data() 
+timeline = timeline_df(df)
+
+empty_days = list(timeline.sum(1)[timeline.sum(1)==0].index)
+empty_days
