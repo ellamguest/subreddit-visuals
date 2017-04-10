@@ -28,13 +28,28 @@ def date_range(df):
     dates = list(pd.date_range(start, end, freq='D'))
     return dates
 
-def date_list(dates, start, end, perm_level=0):
+def get_after(end, pubdates):
+    '''returns the next pubdate after the last seen
+    '''
+    date = np.datetime64(end)
+    if date == pubdates[-1]:
+        after = None
+    else:
+        place = [i for i, j in enumerate(pubdates) if j == date][0]
+        after = pubdates[place+1]
+    return after
+
+def date_list(dates, start, end, after, perm_level=0):
     # return a boolean list of presence for the dates range
     # default values 1 unless perm_level given
+    # after is the date of the snapshot after end
     dl = []
     for date in dates:
+            print dates
             if date > start and date <= end:
                 dl.append(perm_level)
+            elif date > end and date <= after:
+                dl.append(0.5)
             else:
                 dl.append(0)
     return dl
@@ -45,16 +60,19 @@ def check_repeats(df):
     repeats = list(count[count>1].index)
     return repeats
 
-def timeline_dict(df, names, dates):
+def timeline_dict(df, dates):
     #list of names must have no repeat mods
     # df has names as index and columns 'date' and 'pubdate
     d = {}
+    df['pubdate'] = df['pubdate'].map(lambda x: np.datetime64(x))
+    pubdates = list(set(df['pubdate']))
     repeats = check_repeats(df)
-    for name in names:
+    for name in list(set(df['name'])):
         if name not in repeats:
             info = date_list(dates,
                              start=df.loc[name]['date'],
                              end=df.loc[name]['pubdate'],
+                             after = get_after(df.loc[name]['pubdate'], pubdates),
                              perm_level=df.loc[name]['perm_level'])
             d[name] = info
         else:
@@ -62,7 +80,8 @@ def timeline_dict(df, names, dates):
             lines = []
             for row in data.itertuples():
                 start, end, perm_level = row[2], row[3], row[4]
-                line = date_list(dates, start, end, perm_level)
+                after = get_after(end, pubdates)
+                line = date_list(dates, start, end, after, perm_level)
                 lines.append(line)
             info = list(np.sum(lines, 0))
             d[name] = info
@@ -80,4 +99,30 @@ def timeline_df(df):
     temps = timeline.sum()[timeline.sum()==0].index #remove mods present less than a week
     timeline = timeline[[name for name in names if name not in temps]] #over mods by time of first modding
     return timeline
-    
+
+# CREATE AND PLOT MONTHLY TIMELINE
+def monthly_timeline(df):
+    timeline = timeline_df(df)
+    months = timeline.resample('M').last()
+    months.index = months.index.map(lambda x: '{}-{:02d}'.format(x.year,x.month))
+    names = months.sum()[months.sum()>0].index
+    months = months[names]
+    return months
+
+def weekly_timeline(df):
+    timeline = timeline_df(df)
+    weeks = timeline.resample('W').last()
+    names = weeks.sum()[weeks.sum()>0].index
+    weeks = weeks[names]   
+    weeks.index = weeks.index.map(lambda x: '{}-{:02d}-{:02d}'.format(
+                                            x.year,x.month, x.day))
+    return weeks
+
+
+##### attempting to add partial color for possible presence
+
+#subset = df.loc['OhSnapYouGotServed']
+
+
+timeline = timeline_df(df)
+

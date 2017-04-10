@@ -30,7 +30,7 @@ def cmv_data():
 
 # TD data
 def td_data():
-    df = pd.read_csv('/Users/emg/Programming/GitHub/the_donald_project/raw_data/all_mods_archive_it_04_17.csv')
+    df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
     df['perm_level'] = df['permissions'].map(
             {'+access,-config,-flair,-mail,+posts,-wiki':2,
                  '+access,-config,+flair,+mail,+posts,-wiki':3,
@@ -38,17 +38,12 @@ def td_data():
             ).fillna(1)
     return df
 
-# CREATE AND PLOT MONTHLY TIMELINE
-def monthly_timeline(df):
-    timeline = timeline_df(df)
-    months = timeline.resample('M').last()
-    months.index = months.index.map(lambda x: '{}-{:02d}'.format(x.year,x.month))
-    return months
+
 
 ## CREATE MONTHLY TIMELINES
-df1 = td_data() 
-months1 = monthly_timeline(df1)
-timeline = timeline_df(df1)
+df = td_data() 
+months1 = monthly_timeline(df)
+timeline = timeline_df(df)
 
 df2 = cmv_data() 
 months2 = monthly_timeline(df2)
@@ -57,7 +52,7 @@ timeline = timeline_df(df1)
 
 ##BETTER COLOURED PLOT
 #set colormap
-colours = ('white','orange','green','red','blue')
+colours = ('white','grey','orange','green','red','blue')
 cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
 
 def plot():
@@ -84,21 +79,24 @@ def plot():
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
     
+    plt.gca().set_yticks(plt.gca().get_yticks()[::3])
     plt.tight_layout()
     
-    #plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines.png')
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines.png')
 
 plot()
 
+weeks = weekly_timeline(df)
+months = monthly_timeline(df)
 
 def td_plot():
     #td plot only
-    sns.heatmap(months1,cmap=cmap,cbar=False)
+    sns.heatmap(months,cmap=cmap,cbar=False)
     plt.title('TD Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('TD Moderators')
     plt.tick_params(axis='x',which='both', labelbottom='off')
-    plt.gca().set_yticks(plt.gca().get_yticks()[::3])
+    #plt.gca().set_yticks(plt.gca().get_yticks()[::3])
 
 td_plot()
 
@@ -109,6 +107,11 @@ def cmv_plot():
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('CMV Moderators')
     plt.tick_params(axis='x',which='both', labelbottom='off')
-    plt.gca().set_yticks(plt.gca().get_yticks()[::3])
+    #plt.gca().set_yticks(plt.gca().get_yticks()[::3])
 
 cmv_plot()
+
+
+d = months1.sum(1)[months1.sum(1) == 8.0].index
+               s = timeline[timeline.index.isin(d)]
+               
