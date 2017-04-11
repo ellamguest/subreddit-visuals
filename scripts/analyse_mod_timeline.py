@@ -19,43 +19,48 @@ sns.set_style("white") # set aes to white w/out grid
 # CMV data
 def cmv_data():
     df = pd.read_csv('/Users/emg/Programming/GitHub/cmv/tidy_data/dated_mod_df.csv', index_col=0)
-    df['pubdate'] = df['pubdate'].astype(str)
-    df['pubdate'] = df['pubdate'].apply(lambda t:'{}/{}/{}'.format(t[:4],t[4:6],t[6:8]))
+    df['date'] = pd.to_datetime(df['date'])
+    df['pubdate'] = pd.to_datetime(df['pubdate'].astype(str), format='%Y%m%d%H%M%S')
     df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4}
-            ).fillna(1)
+            {'+access,-config,-flair,-mail,+posts,-wiki':3,
+                 '+access,-config,+flair,+mail,+posts,-wiki':4,
+                 '+all':5}
+            ).fillna(2)
     return df
 
 # TD data
 def td_data():
     df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
     df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4}
-            ).fillna(1)
+            {'+access,-config,-flair,-mail,+posts,-wiki':3,
+                 '+access,-config,+flair,+mail,+posts,-wiki':4,
+                 '+all':5}
+            ).fillna(2)
     return df
 
 
 
 ## CREATE MONTHLY TIMELINES
-df = td_data() 
-months1 = monthly_timeline(df)
-timeline = timeline_df(df)
+df1 = td_data() 
+timeline = timeline_df(df1)
+months1 = monthly_timeline(df1)
 
 df2 = cmv_data() 
 months2 = monthly_timeline(df2)
 
-timeline = timeline_df(df1)
 
 ##BETTER COLOURED PLOT
 #set colormap
-colours = ('white','grey','orange','green','red','blue')
+colours = ('white','orange','green','red','blue')
 cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
 
+# when right censoring boundary = 0.5
+
+
 def plot():
+    colours = ('white','grey','orange','green','red','blue')
+    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
+    
     fig, (ax1, ax2) = plt.subplots(1,2, figsize=(25,12)) #, gridspec_kw = {'width_ratios':[2, 1]})
     
     # TD subplot
@@ -86,12 +91,9 @@ def plot():
 
 plot()
 
-weeks = weekly_timeline(df)
-months = monthly_timeline(df)
-
 def td_plot():
     #td plot only
-    sns.heatmap(months,cmap=cmap,cbar=False)
+    sns.heatmap(timeline,cmap=cmap,cbar=False)
     plt.title('TD Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('TD Moderators')
@@ -111,7 +113,3 @@ def cmv_plot():
 
 cmv_plot()
 
-
-d = months1.sum(1)[months1.sum(1) == 8.0].index
-               s = timeline[timeline.index.isin(d)]
-               
