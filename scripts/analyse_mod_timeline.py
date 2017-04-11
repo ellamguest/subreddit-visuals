@@ -47,6 +47,7 @@ months1 = monthly_timeline(df1)
 
 df2 = cmv_data() 
 months2 = monthly_timeline(df2)
+timeline2 = timeline_df(df2)
 
 
 ##BETTER COLOURED PLOT
@@ -104,7 +105,7 @@ td_plot()
 
 def cmv_plot():
     #cmv plot only
-    sns.heatmap(months2,cmap=cmap,cbar=False)
+    sns.heatmap(timeline2,cmap=cmap,cbar=False)
     plt.title('CMV Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('CMV Moderators')

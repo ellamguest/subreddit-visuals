@@ -149,7 +149,7 @@ def date_list(dates, start, end, after, perm_level=0):
             if date > start and date <= end:
                 dl.append(perm_level)
             elif date > end and date <= after:
-                dl.append(1.0)
+                dl.append(0.4)
             else:
                 dl.append(0)
     return dl
@@ -180,9 +180,38 @@ def timeline_dict(df):
                 lines.append(date_list(dates=date_range(df),
                                  start=row[2], end=row[3],
                                  after= row[4], perm_level=row[5]))
-            info = list(np.sum(lines, 0))
+            info = list(np.nansum(lines, 0))
             d[name] = info
     return d
+
+
+#trying to go straight to df
+def td_timeline():
+    df = td_data()
+    df = prep_df(df)
+    names = list(df.sort_values('date')['name'].drop_duplicates())
+    timeline = pd.DataFrame(index=date_range(df), columns = names)
+    repeats = check_repeats(df)
+    for name in names:
+        if name not in repeats:
+            info = date_list(dates = date_range(df),
+                             start = df.loc[name,'date'],
+                             end = df.loc[name,'pubdate'],
+                             after = df.loc[name,'after'],
+                             perm_level = df.loc[name,'perm_level'])
+            timeline[name] = info
+        else:
+            data =  df.loc[name]
+            lines = []
+            for row in data.itertuples():
+                lines.append(date_list(dates=date_range(df),
+                                 start=row[2], end=row[3],
+                                 after= row[4], perm_level=row[5]))
+            info = list(np.around(np.nansum(lines, 0), 0))
+            timeline[name] = info
+    return timeline
+
+
 
 def timeline_df(df):
     #df should have columns name date, pubdate, perm_level
@@ -213,5 +242,7 @@ def monthly_timeline(df):
     return months
 
 df = td_data()
+df = prep_df(df)
+
 timeline = timeline_df(df)
 months = monthly_timeline(df)
