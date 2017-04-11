@@ -7,13 +7,13 @@ Created on Thu Apr  6 15:46:10 2017
 """
 
 import pandas as pd
-from create_mod_timeline import *
-import numpy as np
+#from create_mod_timeline import *
+#import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt 
 from matplotlib.colors import LinearSegmentedColormap
 
-sns.set_style("white") # set aes to white w/out grid
+#sns.set_style("white") # set aes to white w/out grid
 
 ## IMPORT DATA and MAKE MONTHLY TIMELINE
 # CMV data
@@ -52,8 +52,7 @@ timeline2 = timeline_df(df2)
 
 ##BETTER COLOURED PLOT
 #set colormap
-colours = ('white','orange','green','red','blue')
-cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
+
 
 # when right censoring boundary = 0.5
 
@@ -81,7 +80,7 @@ def plot():
     # legend
     colorbar = ax2.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
-    colorbar.set_ticklabels(['not present', 'other perm types',
+    colorbar.set_ticklabels(['not present', 'possibly present', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
     
@@ -94,7 +93,7 @@ plot()
 
 def td_plot():
     #td plot only
-    sns.heatmap(timeline,cmap=cmap,cbar=False)
+    sns.heatmap(months1,cmap=cmap,cbar=False)
     plt.title('TD Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('TD Moderators')
@@ -105,7 +104,7 @@ td_plot()
 
 def cmv_plot():
     #cmv plot only
-    sns.heatmap(timeline2,cmap=cmap,cbar=False)
+    sns.heatmap(months2,cmap=cmap,cbar=False)
     plt.title('CMV Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('CMV Moderators')
