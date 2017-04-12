@@ -1,6 +1,14 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
+Created on Wed Apr 12 11:27:22 2017
+
+@author: emg
+"""
+
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Apr  4 17:30:46 2017
 
 @author: emg
@@ -110,70 +118,33 @@ def weekly_timeline(df, min=1):
 
 ####### PLOTTING FUNCTIONS
 def set_cmap():
-    colours = ('white','grey','orange','green','red','blue')
+    colours = ('white','orange','green','red','blue')
     cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
     return cmap
 
-def joint_plot():
-    colours = ('white','grey','orange','green','red','blue')
-    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
-    
-    fig, (ax1, ax2) = plt.subplots(2,1)#, figsize=(25,12)) #, gridspec_kw = {'width_ratios':[2, 1]})
-    
-    # TD subplot
-    g1 = sns.heatmap(weeks1,cmap=cmap,cbar=False,ax=ax1)
-    g1.set_title('TD Moderator Timeline')
-    g1.set_ylabel('Month')
-    g1.set_xlabel('TD Moderators')
-    g1.tick_params(axis='x',which='both', labelbottom='off')
-    
-    # CMV subplot
-    g2 = sns.heatmap(weeks2,cmap=cmap,ax=ax2)
-    g2.set_title('CMV Moderator Timeline')
-    g2.set_ylabel('Month')
-    g2.set_xlabel('CMV Moderators')
-    g2.tick_params(axis='x',which='both', labelbottom='off')   
-    
-    # legend
-    colorbar = ax2.collections[0].colorbar
-    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6, 4.4])
-    colorbar.set_ticklabels(['not present', 'possibly present', 'other perm types',
-                             '+ access, posts', '+ access, flair, mail, posts',
-                             'all'])
-    
-    plt.gca().set_yticks(plt.gca().get_yticks()[::3])
-    plt.tight_layout()
-    
-    #plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/joint-timelines.png')
-
-
 def td_plot():
     plt.figure(figsize=(30,20))
-    sns.heatmap(timeline.T,cmap=cmap,cbar=False)
+    ax = sns.heatmap(timeline.T,cmap=set_cmap())
     plt.title('TD Moderator Timeline')
-    plt.ylabel('Month (Quarterly)')
-    plt.xlabel('TD Moderators')
+    plt.ylabel('TD Moderators)')
+    plt.xlabel('Date')
     #plt.tick_params(axis='x',which='both', labelbottom='off')
     #plt.gca().set_yticks(plt.gca().get_yticks()[::20])
+    colorbar = ax.collections[0].colorbar
+    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
+    colorbar.set_ticklabels(['not present', 'other perm types',
+                             '+ access, posts', '+ access, flair, mail, posts',
+                             'all'])
+    colorbar.ax.tick_params(labelsize=20)
     plt.tight_layout()
-    #plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline.png')
-
-def cmv_plot():
-    sns.heatmap(weeks2,cmap=cmap,cbar=False)
-    plt.title('CMV Moderator Timeline')
-    plt.ylabel('Month (Quarterly)')
-    plt.xlabel('CMV Moderators')
-    plt.tick_params(axis='x',which='both', labelbottom='off')
-    #plt.gca().set_yticks(plt.gca().get_yticks()[::3])
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline.png')
 
 ######## RUN SCRIPT
 
 timeline = timeline_df(td_data())
-cmap = set_cmap() 
+timeline = timeline[timeline.sum()[timeline.sum()>6].index]
 td_plot()
 
-
-#w/o afters
 
 
 
