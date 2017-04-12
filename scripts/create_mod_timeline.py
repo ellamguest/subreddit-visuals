@@ -150,6 +150,7 @@ def joint_plot():
 def td_plot():
     plt.figure(figsize=(30,20))
     sns.heatmap(timeline.T,cmap=cmap,cbar=False)
+ 
     plt.title('TD Moderator Timeline')
     plt.ylabel('Month (Quarterly)')
     plt.xlabel('TD Moderators')

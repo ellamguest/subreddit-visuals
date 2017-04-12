@@ -116,16 +116,15 @@ def set_cmap():
     cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
     return cmap
 
-locator = mdates.MonthLocator()
-formatter = mdates.DateFormatter('%y-%m')
-
-loc = MonthLocator(bymonth=1, bymonthday=1)
-frmt = DateFormatter('%y-%m')
-
 def td_plot():
     plt.figure(figsize=(30,20))
     
     ax = sns.heatmap(timeline.T, cmap=set_cmap(), cbar=False)
+    start, end = ax.get_xlim()
+    ax.set_xticks(np.arange(start, end+30, 30))
+    ax.set_xticklabels(list(timeline.index.strftime('%Y-%m'))[::30])
+    plt.gcf().autofmt_xdate()
+    
     plt.title('TD Moderator Timeline')
     plt.ylabel('TD Moderators)')
     plt.xlabel('Date')
@@ -146,13 +145,17 @@ def td_plot():
 ######## RUN SCRIPT
 
 timeline = timeline_df(td_data())
-timeline = timeline[timeline.sum()[timeline.sum()>6].index]
+
+
+timeline = timeline[timeline.sum()[timeline.sum()>30].index]
 td_plot()
 
+plt.xticks(np.arange(min(timeline.index), max(timeline.index)+1, 30.0))
 
 
 # montly ticks not working in plot!
 from matplotlib.dates import DateFormatter, DayLocator
+
 
 plt.gca().set_xticks([])
 plt.gca().xaxis.set_major_locator(DayLocator(bymonthday=1))
