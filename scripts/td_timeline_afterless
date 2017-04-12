@@ -6,18 +6,12 @@ Created on Wed Apr 12 11:27:22 2017
 @author: emg
 """
 
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Apr  4 17:30:46 2017
-
-@author: emg
-"""
 import pandas as pd
 from datetime import datetime
 import seaborn as sns
 import matplotlib.pyplot as plt 
 from matplotlib.colors import LinearSegmentedColormap
+import numpy as np
 
 ### FUCNTIONS TO CONVERT MOD INSTANCES DF TO MOD PRESENCE TIMELINE
 
@@ -37,10 +31,10 @@ def prep_df(df):
     df['after'] = pd.to_datetime(df['pubdate'].map(lambda x:
                                     after_dict[x])).dt.normalize()
     df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':3,
-                 '+access,-config,+flair,+mail,+posts,-wiki':4,
-                 '+all':5}
-            ).fillna(2)
+            {'+access,-config,-flair,-mail,+posts,-wiki':2,
+                 '+access,-config,+flair,+mail,+posts,-wiki':3,
+                 '+all':4}
+            ).fillna(1)
     df.sort_values(['date','pubdate'], inplace=True)
     df.drop_duplicates(['name','date'], keep='last', inplace=True)
     df.set_index('name', inplace=True, drop=False)
@@ -122,20 +116,30 @@ def set_cmap():
     cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
     return cmap
 
+locator = mdates.MonthLocator()
+formatter = mdates.DateFormatter('%y-%m')
+
+loc = MonthLocator(bymonth=1, bymonthday=1)
+frmt = DateFormatter('%y-%m')
+
 def td_plot():
     plt.figure(figsize=(30,20))
-    ax = sns.heatmap(timeline.T,cmap=set_cmap())
+    
+    ax = sns.heatmap(timeline.T, cmap=set_cmap(), cbar=False)
     plt.title('TD Moderator Timeline')
     plt.ylabel('TD Moderators)')
     plt.xlabel('Date')
-    #plt.tick_params(axis='x',which='both', labelbottom='off')
-    #plt.gca().set_yticks(plt.gca().get_yticks()[::20])
+    
+    plt.tick_params(axis='x',which='both', labelbottom='off')
+    plt.gca().set_xticks(plt.gca().get_yticks()[::20])
+    
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
     colorbar.set_ticklabels(['not present', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
     colorbar.ax.tick_params(labelsize=20)
+    
     plt.tight_layout()
     plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline.png')
 
@@ -144,6 +148,17 @@ def td_plot():
 timeline = timeline_df(td_data())
 timeline = timeline[timeline.sum()[timeline.sum()>6].index]
 td_plot()
+
+
+
+# montly ticks not working in plot!
+from matplotlib.dates import DateFormatter, DayLocator
+
+plt.gca().set_xticks([])
+plt.gca().xaxis.set_major_locator(DayLocator(bymonthday=1))
+plt.gca().xaxis.set_major_formatter(DateFormatter('%y-%m'))
+plt.gcf().autofmt_xdate()
+
 
 
 
