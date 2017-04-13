@@ -112,57 +112,81 @@ def weekly_timeline(df, min=1):
 
 ####### PLOTTING FUNCTIONS
 def set_cmap():
-    colours = ('white','orange','green','red','blue')
+    colours = ('white','chocolate','slateblue','seagreen','black')
     cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
     return cmap
 
 def td_plot():
-    plt.figure(figsize=(30,20))
+    plt.figure(figsize=(13,9))
     
-    ax = sns.heatmap(timeline.T, cmap=set_cmap(), cbar=False)
-    start, end = ax.get_xlim()
-    ax.set_xticks(np.arange(start, end+30, 30))
-    ax.set_xticklabels(list(timeline.index.strftime('%Y-%m'))[::30])
-    plt.gcf().autofmt_xdate()
+    ax = sns.heatmap(timeline, cmap=set_cmap())
+    start, end = ax.get_ylim()
+    ax.set_yticks(np.arange(start, end, 30))
+    ax.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
+    plt.tick_params(axis='x',which='both', labelbottom='off')
     
     plt.title('TD Moderator Timeline')
-    plt.ylabel('TD Moderators)')
-    plt.xlabel('Date')
-    
-    plt.tick_params(axis='x',which='both', labelbottom='off')
-    plt.gca().set_xticks(plt.gca().get_yticks()[::20])
+    plt.xlabel('TD Moderators')
+    plt.ylabel('Date')
     
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
     colorbar.set_ticklabels(['not present', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
-    colorbar.ax.tick_params(labelsize=20)
+    #colorbar.ax.tick_params(labelsize=20)
     
     plt.tight_layout()
-    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline.png')
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
+
+
+def td_split_plot():
+    '''create timeline subplots for former and current td mods'''
+    last = timeline.index[-1]
+    current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
+    former = timeline[timeline.loc[last][timeline.loc[last] == 0].index]
+    
+    fig, (ax1, ax2) = plt.subplots(2,1) #, figsize=(9,13))
+    
+    g1 = sns.heatmap(former, cmap=set_cmap(),cbar=False, ax=ax1)
+    start, end = g1.get_ylim()
+    g1.set_yticks(np.arange(start, end, 30))
+    g1.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
+    g1.tick_params(axis='x',which='both', labelbottom='off')
+    
+    g1.set_title('TD Former Moderators')
+    g1.set_ylabel('Date')
+    
+    g2 = sns.heatmap(current, cmap=set_cmap(), ax=ax2)
+    start, end = g2.get_ylim()
+    g2.set_yticks(np.arange(start, end, 30))
+    g2.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
+    g2.tick_params(axis='x',which='both', labelbottom='off')
+    
+    g2.set_title('TD Current Moderators')
+    g2.set_xlabel('TD Moderators')
+    g2.set_ylabel('Date')
+    
+    colorbar = ax2.collections[0].colorbar
+    colorbar.set_ticks(np.arange(0.5, len(colours)+0.5, 1))
+    colorbar.set_ticklabels(['not present', 'other perm types',
+                             '+ access, posts', '+ access, flair, mail, posts',
+                             'all'])
+    colorbar.ax.set_title('Permission type')
+    
+    plt.tight_layout()
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-split-V.png')
+
 
 ######## RUN SCRIPT
 
-timeline = timeline_df(td_data())
-
-
+# get timeline
+df = td_data()
+timeline = timeline_df(df)
 timeline = timeline[timeline.sum()[timeline.sum()>30].index]
+
+
+# make plots
 td_plot()
-
-plt.xticks(np.arange(min(timeline.index), max(timeline.index)+1, 30.0))
-
-
-# montly ticks not working in plot!
-from matplotlib.dates import DateFormatter, DayLocator
-
-
-plt.gca().set_xticks([])
-plt.gca().xaxis.set_major_locator(DayLocator(bymonthday=1))
-plt.gca().xaxis.set_major_formatter(DateFormatter('%y-%m'))
-plt.gcf().autofmt_xdate()
-
-
-
 
 
