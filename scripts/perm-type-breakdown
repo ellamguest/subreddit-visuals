@@ -7,107 +7,103 @@ Created on Thu Apr 13 11:58:04 2017
 """
 
 import pandas as pd
+#from datetime import datetime
+import seaborn as sns
+import matplotlib.pyplot as plt 
+from matplotlib.colors import LinearSegmentedColormap
+import numpy as np
 
-df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
+# making permissions types breakdown df?
+#==============================================================================
+# last = timeline.index[-1]
+# current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
+# former = timeline[timeline.loc[last][timeline.loc[last] == 0].index]
+# 
+# names = current.columns
+# 
+# df = df[df['name'].isin(names)]
+# 
+# perms = df['permissions'].value_counts()
+# 
+# labels = pd.Series(perms.index)
+# labels.drop(2, inplace=True)
+# labels = labels.str.split(',', expand=True)
+# 
+# 
+# 
+# cols = list(labels.loc[0].str.lstrip('+-'))
+# labels.columns = cols
+# 
+# for name in cols:
+#     labels[name] = labels[name].str.startswith('+')
+# 
+# labels.sort_values(cols, ascending=False, inplace=True)
+# 
+#==============================================================================
+# plotting td timeline w/ extra perm types
 
-current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
-
-names = current.columns
-
-df = df[df['name'].isin(names)]
-
-perms = df['permissions'].value_counts()
-
-labels = pd.Series(perms.index)
-labels.drop(2, inplace=True)
-labels = labels.str.split(',', expand=True)
-
-
-
-cols = list(labels.loc[0].str.lstrip('+-'))
-labels.columns = cols
-
-for name in cols:
-    labels[name] = labels[name].str.startswith('+')
-
-labels.sort_values(cols, ascending=False, inplace=True)
-
-
-'''
-+access,-config,+flair,+mail,+posts,-wiki    1929
-+access,-config,-flair,-mail,+posts,-wiki     384
-+all                                          317
-+access,+config,+flair,+mail,+posts,+wiki     303
-+access,-config,+flair,+mail,+posts,+wiki     248
-+access,-config,-flair,+mail,+posts,-wiki     176
--access,-config,-flair,-mail,+posts,+wiki     103
-+access,+config,+flair,+mail,+posts,-wiki      80
-+access,+config,-flair,+mail,+posts,+wiki      57
-+access,-config,+flair,-mail,+posts,-wiki      23
-+access,+config,+flair,-mail,+posts,-wiki       9
--access,-config,-flair,-mail,-posts,-wiki       8
-+access,+config,+flair,-mail,+posts,+wiki       6
-+access,-config,+flair,-mail,+posts,+wiki       2
-'''
-
-
-
-+access,+config,+flair,+mail,+posts,+wiki     303
-+access,-config,+flair,+mail,+posts,+wiki     248
-+access,-config,-flair,+mail,+posts,-wiki     176
--access,-config,-flair,-mail,+posts,+wiki     103
-
-{'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4,
-                 
-                 
-                 '+access,+config,+flair,+mail,+posts,+wiki':5,
-                 '+access,-config,+flair,+mail,+posts,+wiki':6,
-                 '+access,-config,-flair,+mail,+posts,-wiki':7,
-                 '-access,-config,-flair,-mail,+posts,+wiki':8}
-
-colours = ('white','chocolate','slateblue','seagreen','black',
-           'tomato','olive','aquamarine','orchid')
-
-def prep_df(df):
+def prep_df(df, perms_dict):
     '''subset df into required columns and types
     to construct timeline df'''
     df['date'] = pd.to_datetime(df['date']).dt.normalize()
     df['pubdate'] = pd.to_datetime(df['pubdate']).dt.normalize()
-    after_dict = make_after_dict(df)
-    df['after'] = pd.to_datetime(df['pubdate'].map(lambda x:
-                                    after_dict[x])).dt.normalize()
-    df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4,
-                 '+access,+config,+flair,+mail,+posts,+wiki':5,
-                 '+access,-config,+flair,+mail,+posts,+wiki':6,
-                 '+access,-config,-flair,+mail,+posts,-wiki':7,
-                 '-access,-config,-flair,-mail,+posts,+wiki':8}
-            ).fillna(1)
+    df['perm_level'] = df['permissions'].map(perms_dict).fillna(1)
     df.sort_values(['date','pubdate'], inplace=True)
     df.drop_duplicates(['name','date'], keep='last', inplace=True)
     df.set_index('name', inplace=True, drop=False)
-    df = df[['name','date','pubdate','after','perm_level']]
+    df = df[['name','date','pubdate','perm_level']]
     return df
 
-def set_cmap():
-    colours = ('white','chocolate','slateblue','seagreen','black',
-               'tomato','olive','aquamarine','orchid')
-    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
-    return cmap
+def date_presence_dict(dates, start, end, perm_level): 
+    '''check mod presence on date'''
+    d = {}
+    for date in dates:
+        if date >= start and date <= end:
+            d[date] = perm_level
+    return d
 
-def td_split_plot():
+def timeline_df(df):
+    '''convert moderator instance date to timeline df'''
+    timeline = pd.DataFrame(index = pd.date_range(start = df['date'].min(),
+                                                  end = df['pubdate'].max(),
+                                                  freq='D'))
+    for name in set(df['name']):
+        if list(df['name']).count(name) == 1:
+            subset = df.loc[name]
+            dates = pd.date_range(start = subset['date'],
+                                  end = subset['pubdate'],
+                                  freq='D')
+            start, end, perm_level = subset['date'], subset['pubdate'], subset['perm_level']
+            d = date_presence_dict(dates, start, end, perm_level)
+            timeline[name] = pd.Series(d)
+
+        elif list(df['name']).count(name) > 1:
+            combined = {}
+            subset = df.loc[name]
+            dates = pd.date_range(start = subset['date'].min(),
+                                  end = subset['pubdate'].max(),
+                                   freq='D')
+            for row in subset.itertuples():
+                start, end, perm_level = row[2], row[3], row[4]
+                d = date_presence_dict(dates, start, end, perm_level)
+                combined.update(d)
+            timeline[name] = pd.Series(combined)
+    timeline.fillna(0, inplace=True)
+    timeline = timeline[list(df.sort_values('date')['name'].drop_duplicates())]
+    return timeline
+
+
+def td_split_plot(timeline, colours):
     '''create timeline subplots for former and current td mods'''
+    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
+    
     last = timeline.index[-1]
     current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
     former = timeline[timeline.loc[last][timeline.loc[last] == 0].index]
     
-    fig, (ax1, ax2) = plt.subplots(2,1) #, figsize=(9,13))
+    fig, (ax1, ax2) = plt.subplots(2,1, figsize=(9,13))
     
-    g1 = sns.heatmap(former, cmap=set_cmap(),cbar=False, ax=ax1)
+    g1 = sns.heatmap(former, vmin=0, vmax=len(colours)-1, cmap=cmap,cbar=False, ax=ax1)
     start, end = g1.get_ylim()
     g1.set_yticks(np.arange(start, end, 30))
     g1.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
@@ -116,7 +112,7 @@ def td_split_plot():
     g1.set_title('TD Former Moderators')
     g1.set_ylabel('Date')
     
-    g2 = sns.heatmap(current, cmap=set_cmap(), ax=ax2)
+    g2 = sns.heatmap(current, cmap=cmap, ax=ax2)
     start, end = g2.get_ylim()
     g2.set_yticks(np.arange(start, end, 30))
     g2.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
@@ -127,7 +123,9 @@ def td_split_plot():
     g2.set_ylabel('Date')
     
     colorbar = ax2.collections[0].colorbar
-    colorbar.set_ticks(np.arange(0.5, len(colours)+0.5, 1))
+    num = len(colours)
+    step = float(num-2)/float(num-1)                      
+    colorbar.set_ticks(np.arange(step/2, num-step/2, step))
     colorbar.set_ticklabels(['not present', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all',
@@ -138,6 +136,36 @@ def td_split_plot():
     colorbar.ax.set_title('Permission type')
     
     plt.tight_layout()
-    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-split-V-8perms.png')
+    #plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-split-V-{}perms.png'.format(len(colours)-1))
+
+# different perm level breakdowns
 
 
+
+pd1 = {'+access,-config,-flair,-mail,+posts,-wiki':2,
+                 '+access,-config,+flair,+mail,+posts,-wiki':3,
+                 '+all':4}
+
+colours1 = ('white','chocolate','slateblue','seagreen','black')
+
+pd2 = {'+access,-config,-flair,-mail,+posts,-wiki':2,
+                 '+access,-config,+flair,+mail,+posts,-wiki':3,
+                 '+all':4,
+                 '+access,+config,+flair,+mail,+posts,+wiki':5,
+                 '+access,-config,+flair,+mail,+posts,+wiki':6,
+                 '+access,-config,-flair,+mail,+posts,-wiki':7,
+                 '-access,-config,-flair,-mail,+posts,+wiki':8}
+
+colours2 = ('white','chocolate','slateblue','seagreen','black',
+               'tomato','olive','aquamarine','orchid')
+
+df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
+
+timeline1 = timeline_df(prep_df(df, pd1))
+timeline1 = timeline1[timeline1.sum()[timeline1.sum()>30].index]
+td_split_plot(timeline1, colours1)
+
+
+timeline2 = timeline_df(prep_df(df, pd2))
+timeline2 = timeline2[timeline2.sum()[timeline2.sum()>30].index]
+td_split_plot(timeline2, colours2)

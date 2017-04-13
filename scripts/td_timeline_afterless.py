@@ -142,13 +142,16 @@ def td_plot():
 
 def td_split_plot():
     '''create timeline subplots for former and current td mods'''
+    colours = ('white','chocolate','slateblue','seagreen','black')
+    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
+    
     last = timeline.index[-1]
     current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
     former = timeline[timeline.loc[last][timeline.loc[last] == 0].index]
     
     fig, (ax1, ax2) = plt.subplots(2,1) #, figsize=(9,13))
     
-    g1 = sns.heatmap(former, cmap=set_cmap(),cbar=False, ax=ax1)
+    g1 = sns.heatmap(former, cmap=cmap,cbar=False, ax=ax1)
     start, end = g1.get_ylim()
     g1.set_yticks(np.arange(start, end, 30))
     g1.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
@@ -157,7 +160,7 @@ def td_split_plot():
     g1.set_title('TD Former Moderators')
     g1.set_ylabel('Date')
     
-    g2 = sns.heatmap(current, cmap=set_cmap(), ax=ax2)
+    g2 = sns.heatmap(current, cmap=cmap, ax=ax2)
     start, end = g2.get_ylim()
     g2.set_yticks(np.arange(start, end, 30))
     g2.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
@@ -168,7 +171,9 @@ def td_split_plot():
     g2.set_ylabel('Date')
     
     colorbar = ax2.collections[0].colorbar
-    colorbar.set_ticks(np.arange(0.5, len(colours)+0.5, 1))
+    num = len(colours)
+    step = float(num-2)/float(num-1)                      
+    colorbar.set_ticks(np.arange(step/2, num-step/2, step))
     colorbar.set_ticklabels(['not present', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
