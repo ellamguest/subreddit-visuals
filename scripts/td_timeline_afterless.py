@@ -87,7 +87,7 @@ def timeline_df(df):
                 combined.update(d)
             timeline[name] = pd.Series(combined)
     timeline.fillna(0, inplace=True)
-    timeline = timeline[list(df.sort_values('date')['name'].drop_duplicates())]
+    timeline = timeline[list(df.sort_values(['date','pubdate'])['name'].drop_duplicates())]
     return timeline
 
 
@@ -117,24 +117,25 @@ def set_cmap():
     return cmap
 
 def td_plot():
-    plt.figure(figsize=(13,9))
+    plt.figure(figsize=(15,20))
     
-    ax = sns.heatmap(timeline, cmap=set_cmap())
-    start, end = ax.get_ylim()
-    ax.set_yticks(np.arange(start, end, 30))
-    ax.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
-    plt.tick_params(axis='x',which='both', labelbottom='off')
+    ax = sns.heatmap(timeline.T, cmap=set_cmap())
+    start, end = ax.get_xlim()
+    ax.set_xticks(np.arange(start, end, 30))
+    ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
+    plt.tick_params(axis='y',which='both', labelleft='off')
     
-    plt.title('TD Moderator Timeline')
-    plt.xlabel('TD Moderators')
-    plt.ylabel('Date')
+    plt.title('TD Moderator Presence Timeline')
+    plt.ylabel('TD Moderators')
+    plt.xlabel('Date')
     
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
-    colorbar.set_ticklabels(['not present', 'other perm types',
+    colorbar.set_ticklabels(['', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
     #colorbar.ax.tick_params(labelsize=20)
+    colorbar.make_axes(ax, location='bottom')
     
     plt.tight_layout()
     plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
@@ -188,10 +189,32 @@ def td_split_plot():
 # get timeline
 df = td_data()
 timeline = timeline_df(df)
-timeline = timeline[timeline.sum()[timeline.sum()>30].index]
+timeline = timeline[timeline.sum()[timeline.sum()>60].index]
+ordered = timeline.sum().sort_values(ascending=False).index
+timeline = timeline[ordered]
 
 
 # make plots
 td_plot()
 
 
+
+fig, ax = plt.subplots()
+ax = sns.heatmap(timeline.T, cmap=set_cmap())
+start, end = ax.get_xlim()
+ax.set_xticks(np.arange(start, end, 30))
+ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
+plt.tick_params(axis='y',which='both', labelleft='off')
+
+plt.title('TD Moderator Presence Timeline')
+plt.ylabel('TD Moderators')
+plt.xlabel('Date')
+
+cax = ax.imshow(timeline.T, cmap=set_cmap())
+colorbar = fig.colorbar(cax, orientation='horizontal')
+colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
+colorbar.set_ticklabels(['', 'other perm types',
+                         '+ access, posts', '+ access, flair, mail, posts',
+                         'all'])
+
+plt.tight_layout()
