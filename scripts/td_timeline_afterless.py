@@ -117,6 +117,10 @@ def set_cmap():
     return cmap
 
 def td_plot():
+    df = cmv_data()
+    timeline = timeline_df(df)
+    timeline = timeline[timeline.sum()[timeline.sum()>60].index]
+    
     plt.figure(figsize=(15,20))
     
     ax = sns.heatmap(timeline.T, cmap=set_cmap())
@@ -140,58 +144,36 @@ def td_plot():
     plt.tight_layout()
     plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
 
-
-def td_split_plot():
-    '''create timeline subplots for former and current td mods'''
-    colours = ('white','chocolate','slateblue','seagreen','black')
-    cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
+def cmv_plot():
+    df = cmv_data()
+    timeline = timeline_df(df)
     
-    last = timeline.index[-1]
-    current = timeline[timeline.loc[last][timeline.loc[last] > 0].index]
-    former = timeline[timeline.loc[last][timeline.loc[last] == 0].index]
+    plt.figure(figsize=(15,15))
     
-    fig, (ax1, ax2) = plt.subplots(2,1) #, figsize=(9,13))
+    ax = sns.heatmap(timeline.T, cmap=set_cmap())
+    start, end = ax.get_xlim()
+    ax.set_xticks(np.arange(start, end, 30))
+    ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
+    plt.tick_params(axis='y',which='both', labelleft='off')
     
-    g1 = sns.heatmap(former, cmap=cmap,cbar=False, ax=ax1)
-    start, end = g1.get_ylim()
-    g1.set_yticks(np.arange(start, end, 30))
-    g1.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
-    g1.tick_params(axis='x',which='both', labelbottom='off')
+    plt.title('CMV Moderator Presence Timeline')
+    plt.ylabel('CMV Moderators')
+    plt.xlabel('Date')
     
-    g1.set_title('TD Former Moderators')
-    g1.set_ylabel('Date')
-    
-    g2 = sns.heatmap(current, cmap=cmap, ax=ax2)
-    start, end = g2.get_ylim()
-    g2.set_yticks(np.arange(start, end, 30))
-    g2.set_yticklabels(list(timeline.index.strftime('%Y-%m'))[::-30])
-    g2.tick_params(axis='x',which='both', labelbottom='off')
-    
-    g2.set_title('TD Current Moderators')
-    g2.set_xlabel('TD Moderators')
-    g2.set_ylabel('Date')
-    
-    colorbar = ax2.collections[0].colorbar
-    num = len(colours)
-    step = float(num-2)/float(num-1)                      
-    colorbar.set_ticks(np.arange(step/2, num-step/2, step))
-    colorbar.set_ticklabels(['not present', 'other perm types',
+    colorbar = ax.collections[0].colorbar
+    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
+    colorbar.set_ticklabels(['', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
-    colorbar.ax.set_title('Permission type')
+    #colorbar.ax.tick_params(labelsize=20)
+    colorbar.make_axes(ax, location='bottom')
     
     plt.tight_layout()
-    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-split-V.png')
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
+
 
 
 ######## RUN SCRIPT
-
-# get timeline
-df = td_data()
-timeline = timeline_df(df)
-timeline = timeline[timeline.sum()[timeline.sum()>60].index]
-ordered = timeline.sum().sort_values(ascending=False).index
-timeline = timeline[ordered]
 
 
 # make plots
