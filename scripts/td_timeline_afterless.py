@@ -116,87 +116,112 @@ def set_cmap():
     cmap = LinearSegmentedColormap.from_list('Custom', colours, len(colours))
     return cmap
 
-def td_plot():
+def td_plot_H():
+    df = td_data()
+    td_timeline = timeline_df(df)
+    td_timeline = td_timeline[td_timeline.sum()[td_timeline.sum()>60].index]
+    
+    plt.figure(figsize=(15,15))
+    
+    ax = sns.heatmap(td_timeline, cmap=set_cmap(), cbar=False)
+   
+    start, end = ax.get_ylim()
+    ax.set_yticks(np.arange(start, end, 60))
+    ax.set_yticklabels(list(td_timeline.index.strftime('%Y-%m')[::-60]), fontsize=25)
+    plt.tick_params(axis='x',which='both', labelbottom='off')
+    
+    plt.title('r/The_Donald Moderator Presence Timeline', fontsize=50, y=1.04, fontweight='bold')
+    plt.xlabel('r/The_Donald Moderators', fontsize=40,  y=-1.08)
+    plt.ylabel('Moderator Presence by Date', fontsize=40, x=-.58)
+    
+#    colorbar = ax.collections[0].colorbar
+#    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
+#    colorbar.set_ticklabels(['', 'other perm types',
+#                             '+ access, posts', '+ access, flair, mail, posts',
+#                             'all'])
+    
+    plt.tight_layout()
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-H.png')
+
+def cmv_plot_H():
     df = cmv_data()
-    timeline = timeline_df(df)
-    timeline = timeline[timeline.sum()[timeline.sum()>60].index]
+    cmv_timeline = timeline_df(df)
     
-    plt.figure(figsize=(15,20))
+    plt.figure(figsize=(30,15))
     
-    ax = sns.heatmap(timeline.T, cmap=set_cmap())
+    ax = sns.heatmap(cmv_timeline, cmap=set_cmap())
+    start, end = ax.get_ylim()
+    ax.set_yticks(np.arange(start, end, 60))
+    ax.set_yticklabels(list(cmv_timeline.index.strftime('%Y-%m')[::-60]), fontsize=30)
+    plt.tick_params(axis='x',which='both', labelbottom='off')
+    
+    plt.title('CMV Moderator Presence Timeline', fontsize=60)
+    plt.xlabel('r/ChangeMyView Moderators', fontsize=40)
+    plt.ylabel('Moderator Presence by Date', fontsize=40)
+    
+    colorbar = ax.collections[0].colorbar
+    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
+    colorbar.set_ticklabels(['', 'Other permission types',
+                             'Access and post permissions only', 'Access, flair, mail and posts permissions',
+                             'All permissions (Top moderator)'])
+    colorbar.ax.tick_params(labelsize=40)
+    
+    plt.tight_layout()
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/cmv-timeline-H.png')
+
+def td_plot_V():
+    df = td_data()
+    td_timeline = timeline_df(df)
+    td_timeline = td_timeline[td_timeline.sum()[td_timeline.sum()>60].index]
+    
+    plt.figure(figsize=(20,15))
+    
+    ax = sns.heatmap(td_timeline.T, cmap=set_cmap())
+   
     start, end = ax.get_xlim()
-    ax.set_xticks(np.arange(start, end, 30))
-    ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
+    ax.set_xticks(np.arange(start, end, 60))
+    ax.set_xticklabels(list(td_timeline.index.strftime('%Y-%m')[::-60]), fontsize=25)
     plt.tick_params(axis='y',which='both', labelleft='off')
     
-    plt.title('TD Moderator Presence Timeline')
-    plt.ylabel('TD Moderators')
-    plt.xlabel('Date')
+    plt.title('r/The_Donald Moderator Presence Timeline')
+    plt.ylabel('r/The_Donald Moderators', fontsize=40)
+    plt.xlabel('Date', fontsize=40)
     
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
     colorbar.set_ticklabels(['', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
-    #colorbar.ax.tick_params(labelsize=20)
-    colorbar.make_axes(ax, location='bottom')
     
     plt.tight_layout()
     plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
 
-def cmv_plot():
+def cmv_plot_H():
     df = cmv_data()
-    timeline = timeline_df(df)
+    cmv_timeline = timeline_df(df)
     
     plt.figure(figsize=(15,15))
     
-    ax = sns.heatmap(timeline.T, cmap=set_cmap())
-    start, end = ax.get_xlim()
-    ax.set_xticks(np.arange(start, end, 30))
-    ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
-    plt.tick_params(axis='y',which='both', labelleft='off')
+    ax = sns.heatmap(cmv_timeline, cmap=set_cmap())
+    start, end = ax.get_ylim()
+    ax.set_yticks(np.arange(start, end, 60))
+    ax.set_yticklabels(list(cmv_timeline.index.strftime('%Y-%m')[::-60]), fontsize=30)
+    plt.tick_params(axis='x',which='both', labelbottom='off')
     
     plt.title('CMV Moderator Presence Timeline')
-    plt.ylabel('CMV Moderators')
-    plt.xlabel('Date')
+    plt.xlabel('r/ChangeMyView Moderators', fontsize=40)
+    plt.ylabel('Date', fontsize=40)
     
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
     colorbar.set_ticklabels(['', 'other perm types',
                              '+ access, posts', '+ access, flair, mail, posts',
                              'all'])
-    #colorbar.ax.tick_params(labelsize=20)
-    colorbar.make_axes(ax, location='bottom')
     
     plt.tight_layout()
-    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-V.png')
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/cmv-timeline-H.png')
 
 
 
 ######## RUN SCRIPT
 
-
-# make plots
-td_plot()
-
-
-
-fig, ax = plt.subplots()
-ax = sns.heatmap(timeline.T, cmap=set_cmap())
-start, end = ax.get_xlim()
-ax.set_xticks(np.arange(start, end, 30))
-ax.set_xticklabels(list(reversed(list(timeline.index.strftime('%Y-%m')[::-30]))))
-plt.tick_params(axis='y',which='both', labelleft='off')
-
-plt.title('TD Moderator Presence Timeline')
-plt.ylabel('TD Moderators')
-plt.xlabel('Date')
-
-cax = ax.imshow(timeline.T, cmap=set_cmap())
-colorbar = fig.colorbar(cax, orientation='horizontal')
-colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
-colorbar.set_ticklabels(['', 'other perm types',
-                         '+ access, posts', '+ access, flair, mail, posts',
-                         'all'])
-
-plt.tight_layout()
