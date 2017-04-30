@@ -8,15 +8,15 @@ Created on Thu Mar  2 14:23:59 2017
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from prawini import *
+import re
+#from prawini import *
 
 params = get_params()
 headers={'User-agent':params['user_agent']}
 
-df = pd.read_csv('/Users/emg/Programming/GitHub/the_donald_project/raw_data/current-mod-table.csv',
-                 index_col=0)
+df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
 
-names = list((df[df['name']!='AutoModerator']['name']))
+names = list(set((df[df['name']!='AutoModerator']['name'])))
 
 
 def make_soup(url):
@@ -25,6 +25,7 @@ def make_soup(url):
     return soup
 
 d = {}
+errors = []
 for name in names:
     print name
     url = 'https://www.reddit.com/user/{}'.format(name)
@@ -37,38 +38,89 @@ for name in names:
             subs.append(item.a['title'])
         d[name] = subs
     except:
+        errors.append(name)
         pass
-    
 
-values = list(set([x for y in d.values() for x in y]))
-data = {}
-for key in d.keys():
-    data[key] = [True if value in d[key] else False for value in values ]
-
-mod_subs = pd.DataFrame(data, index=values)
-mod_subs = mod_subs.applymap(lambda x: 1 if x else 0)
-
-
-subs = list(mod_subs.index)
-
-dfs = []
-errors = []
-n = 1
-for sub in subs:
+errors2 = []
+for name in errors[0]:
+    print name
+    url = 'https://www.reddit.com/user/{}'.format(name)
+    soup = make_soup(url)
     try:
-        df = scrape_mod_table(sub)
+        table = soup.find('ul', {'id':'side-mod-list'})
+        items = table.find_all('li')
+        subs = []
+        for item in items:
+            subs.append(item.a['title'])
+        d[name] = subs
     except:
-        errors.append(sub)
+        errors2.append(name)
         pass
-    dfs.append(df)
-    n += 1
 
-all_sub_mods = pd.concat(dfs)
+d = {}
+errors3 = []
+for sub in subs:
+    print sub
+    try:
+        url = 'https://www.reddit.com/{}/about/moderators'.format(sub)
+        print url
+        soup = make_soup(url)
+        table = soup.find('div',{'class':'moderator-table'})
+        items = table.find_all(href=re.compile("/user/"))
+        names = []
+        for item in items:
+            names.append(item.text)
+        d[sub] = names
+    except:
+        errors3.append(sub)
+        pass
+        
 
-all_sub_mods.to_csv('/Users/emg/Programming/GitHub/the_donald_project/raw_data/all_sub_mods.csv')
+edgelist = [] 
+for key in d.keys():
+    for value in d[key]:
+        edgelist.append([value, key])
+
+edgelist = pd.DataFrame(edgelist)
+edgelist.columns = ['name', 'sub']
+#td_mods = list(set(df['name']))
+#edgelist = edgelist[edgelist['name'].isin(td_mods)]
+edgelist.to_csv('/Users/emg/Programming/GitHub/the_donald_project/tidy_data/edgelist_subset.csv', index=False)
 
 
 
-# then use td_convert to edgelist
+def get_mod_type(name, mode):
+    mods = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
+    current = mods['pubdate'].max()
+    subset = mods[mods['name']==name]
+    if mode == 1:
+        return 1
+    if name not in list(mods['name']):
+        return 2
+    if current not in list(subset['pubdate']):
+        if '+all' not in list(subset['permissions']):
+            return 3
+        else:
+            return 4
+    if current in list(subset['pubdate']):
+        if '+all' not in list(subset['permissions']):
+            return 5
+        else:
+            return 6
 
+def get_nodelist(df):
+    ''' return edgelist, nodelist from df with
+        colums (moderator) 'name' and 'sub'
+    '''
+    nodelist = pd.DataFrame(list(set(df['name'])) + list(set(df['sub'])))
+    modes = [0]*len(list(set(df['name']))) + [1]*len(list(set(df['sub'])))
+    nodelist['type'] = modes
+    nodelist['name']=nodelist[0].apply(lambda x: x.strip('r/'))
+    nodelist['mod_types'] = nodelist.apply(lambda row: get_mod_type(row['name'], row['type']), axis=1)
+    return nodelist
+
+nodelist = get_nodelist(edgelist)
+
+
+nodelist.to_csv('/Users/emg/Programming/GitHub/the_donald_project/tidy_data/nodelist_subset.csv', index=False)
 
