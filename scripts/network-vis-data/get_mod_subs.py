@@ -89,7 +89,7 @@ edgelist.to_csv('/Users/emg/Programming/GitHub/the_donald_project/tidy_data/edge
 
 
 
-def get_mod_type(name, mode):
+def get_mod_type(name, mode=0):
     mods = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
     current = mods['pubdate'].max()
     subset = mods[mods['name']==name]
