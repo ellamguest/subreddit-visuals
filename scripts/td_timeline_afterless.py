@@ -30,16 +30,20 @@ def prep_df(df):
     after_dict = make_after_dict(df)
     df['after'] = pd.to_datetime(df['pubdate'].map(lambda x:
                                     after_dict[x])).dt.normalize()
-    df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4}
-            ).fillna(1)
+    df.sort_values('pubdate', inplace=True)
+    df['perm_level'] = df['permissions'].map({'+all':2}).fillna(1)
+    last = df['pubdate'].max()
+    n = {1:3,2:4, 0:0} 
+    current = list(df[df['pubdate']==last]['name'])
+    df.reset_index(inplace=True)
+    c = df[df['name'].isin(current)]['perm_level'].map(n)      
+    df.perm_level.update(c)     
     df.sort_values(['date','pubdate'], inplace=True)
     df.drop_duplicates(['name','date'], keep='last', inplace=True)
     df.set_index('name', inplace=True, drop=False)
     df = df[['name','date','pubdate','after','perm_level']]
     return df
+
 
 def td_data():
     '''open td moderator instance df'''
@@ -274,16 +278,12 @@ def set_cmap():
 
 
 # changing cols to current/former non/top
-    td_timeline = timeline_df(td_data())
+def td_plot_br():
+    df = df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
+    td_timeline = timeline_df(prep_df(df))
     td_timeline = td_timeline[td_timeline.sum()[td_timeline.sum()>60].index]
-    td_timeline.replace([4,3,2],1, inplace=True)
-    
-    for name in td_timeline.columns:
-        print get_mod_type(name)
-        td_timeline[name] = td_timeline[name].map({1:get_mod_type(name), 0:0})
-        
+     
     plt.figure(figsize=(15,9.27))
-    
     ax = sns.heatmap(td_timeline, cmap=set_cmap(), cbar=False)
    
     start, end = ax.get_ylim()
@@ -295,74 +295,41 @@ def set_cmap():
     plt.xlabel('r/The_Donald Moderators', fontsize=40,  labelpad=20)
     plt.ylabel('Moderator Presence by Date', fontsize=40, labelpad=10)
     
-#    colorbar = ax.collections[0].colorbar
-#    colorbar.set_ticks([0.4, 1.2, 2, 2.8, 3.6])
-#    colorbar.set_ticklabels(['', 'Former non-top',
-#                             'Former top',
-#                             'Current non-top',
-#                             'Current top'])
-#    colorbar.ax.tick_params(labelsize=50)
+    # adding event reference lines
+    days = list(td_timeline.index)
+    days.reverse()
+    plt.axhline(y=days.index(datetime(2016,11,8,0,0,0)), ls = 'dashed', color='black', label='Election')
+    plt.axhline(y=days.index(datetime(2017,1,21,0,0,0)), ls = 'dotted', color='black', label='Inauguration')
+    
+    plt.legend(loc=9, fontsize=25)
     
     plt.tight_layout()
+    
+    
     plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/td-timeline-br.png')
 
 def cmv_plot_H():
-    df = cmv_data()
+    df = pd.read_csv('/Users/emg/Programming/GitHub/cmv/tidy_data/dated_mod_df.csv', index_col=0)
+    df['date'] = pd.to_datetime(df['date'])
+    df['pubdate'] = pd.to_datetime(df['pubdate'].astype(str), format='%Y%m%d%H%M%S')
+    df = prep_df(df)
+    
     cmv_timeline = timeline_df(df)
-    cmv_timeline.replace([4,3,2],1, inplace=True)
     
-    mods = pd.read_csv('/Users/emg/Programming/GitHub/cmv/tidy_data/dated_mod_df.csv', index_col=0)
-    for name in cmv_timeline.columns:
-        cmv_timeline[name] = cmv_timeline[name].map({1:get_mod_type(name), 0:0})
-    
-    plt.figure(figsize=(4.635, 7.5))
+    plt.figure(figsize=(8.5, 12.135))
     
     ax = sns.heatmap(cmv_timeline, cmap=set_cmap(), cbar=False)
     start, end = ax.get_ylim()
     ax.set_yticks(np.arange(start, end, 120))
-    ax.set_yticklabels(list(cmv_timeline.index.strftime('%Y-%m')[::-120]), fontsize=35)
+    ax.set_yticklabels(list(cmv_timeline.index.strftime('%Y-%m')[::-120]), fontsize=18)
     plt.tick_params(axis='x',which='both', labelbottom='off')
     
-    plt.title('CMV Moderator Presence Timeline', fontsize=60, y=1.04, fontweight='bold')
-    plt.xlabel('r/ChangeMyView Moderators', fontsize=50,  labelpad=20)
-    plt.ylabel('Moderator Presence by Date', fontsize=50,  labelpad=10)
+    plt.title('CMV Moderator Presence Timeline', fontsize=25, y=1.03, x=0.4, fontweight='bold')
+    plt.xlabel('r/ChangeMyView Moderators', fontsize=20,  labelpad=20)
+    plt.ylabel('Moderator Presence by Date', fontsize=20,  labelpad=10)
     
     plt.tight_layout()
-    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/cmv-timeline-b4.png')
+    
+    plt.savefig('/Users/emg/Programming/GitHub/subreddit-visuals/figures/cmv-timeline-br.png')
 
-
-mods = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
-def get_mod_type(name, mods=mods):
-    current = mods['pubdate'].max()
-    subset = mods[mods['name']==name]
-    if current not in list(subset['pubdate']):
-        if '+all' not in list(subset['permissions']):
-            return 1
-        else:
-            return 2
-    if current in list(subset['pubdate']):
-        if '+all' not in list(subset['permissions']):
-            return 3
-        else:
-            return 4
-
-# change colours by b/r
-def prep_df(df):
-    '''subset df into required columns and types
-    to construct timeline df'''
-    df['date'] = pd.to_datetime(df['date']).dt.normalize()
-    df['pubdate'] = pd.to_datetime(df['pubdate']).dt.normalize()
-    after_dict = make_after_dict(df)
-    df['after'] = pd.to_datetime(df['pubdate'].map(lambda x:
-                                    after_dict[x])).dt.normalize()
-    df['perm_level'] = df['permissions'].map(
-            {'+access,-config,-flair,-mail,+posts,-wiki':2,
-                 '+access,-config,+flair,+mail,+posts,-wiki':3,
-                 '+all':4}
-            ).fillna(1)
-    df.sort_values(['date','pubdate'], inplace=True)
-    df.drop_duplicates(['name','date'], keep='last', inplace=True)
-    df.set_index('name', inplace=True, drop=False)
-    df = df[['name','date','pubdate','after','perm_level']]
-    return df
 
