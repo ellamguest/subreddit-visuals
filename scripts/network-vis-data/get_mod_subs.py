@@ -9,10 +9,22 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import re
-#from prawini import *
+import json
 
-params = get_params()
-headers={'User-agent':params['user_agent']}
+
+### GETTING REDDIT API CREDENTIALS
+with open('credentials.json', 'r') as f:
+     data = json.load(f)
+
+headers={'User-agent':data['user_agent']}
+
+### UPDATE CMV + TD MOD TIMELINES
+import update_cmv_mod_hist
+import update_td_mod_hist
+
+### LOAD TIMELINE MOD HIST DATA
+td_df = pd.read_csv('/Users/emg/Programming/GitHub/mod-timelines/tidy-data/td-mod-hist.csv', index_col=0)
+cmv_df = pd.read_csv('/Users/emg/Programming/GitHub/mod-timelines/tidy-data/cmv-mod-hist.csv', index_col=0)
 
 df = pd.read_csv('/Users/emg/Programming/GitHub/subreddit-visuals/tidy_data/mods/td-mod-hist.csv', index_col=0)
 
